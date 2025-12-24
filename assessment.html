@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foot Health - Med Times</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // 使用與其他頁面一致的色碼
+                        'primary': '#679396',
+                        'primary-dark': '#3a5e5f',
+                        'bg-main': '#F5F5F5',
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        'xl': '1rem',
+                        '2xl': '1.5rem',
+                        '3xl': '2rem',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="css/style.css">
+
+    <script>
+    // 1. 定義載入 HTML 的函式
+    async function loadHTML(selector, url) {
+        try {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`無法載入 ${url}`);
+            const text = await resp.text();
+            document.querySelector(selector).innerHTML = text;
+            
+            // ★ 關鍵點：載入 Header 後，立刻啟動手機選單功能
+            if (selector === '#header') {
+                initMobileMenu();
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    // 2. 初始化手機選單功能的函式
+    function initMobileMenu() {
+        const btn = document.getElementById('mobile-menu-btn');
+        const menu = document.getElementById('mobile-menu');
+        const icon = document.getElementById('menu-icon');
+        let isMenuOpen = false;
+
+        // 確保元素都存在才執行
+        if (btn && menu && icon) {
+            btn.addEventListener('click', () => {
+                isMenuOpen = !isMenuOpen; // 切換開關狀態
+
+                if (isMenuOpen) {
+                    // --- 打開選單 ---
+                    menu.style.maxHeight = "500px"; // 設定一個足夠大的高度讓內容顯示
+                    // 切換圖示：變成 X
+                    icon.classList.remove('fa-bars');
+                    icon.classList.add('fa-xmark');
+                    icon.style.transform = "rotate(90deg)"; // 旋轉特效
+                } else {
+                    // --- 關閉選單 ---
+                    menu.style.maxHeight = "0px"; // 高度歸零
+                    // 切換圖示：變回漢堡
+                    icon.classList.remove('fa-xmark');
+                    icon.classList.add('fa-bars');
+                    icon.style.transform = "rotate(0deg)";
+                }
+            });
+        }
+        
+        // (選用功能) 自動將當前頁面的連結變色 (Highlight)
+        const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+        const links = document.querySelectorAll('nav a');
+        links.forEach(link => {
+            // 比對 href 是否等於當前檔名
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('text-primary'); // 變主色
+                link.classList.remove('text-gray-500');
+            }
+        });
+    }
+
+    // 3. 執行載入
+    window.addEventListener('DOMContentLoaded', () => {
+        loadHTML('#header', 'partials/header.html');
+        loadHTML('#footer', 'partials/footer.html');
+    });
+</script>
+    
+    <style>
+        /* FAQ 收折動畫需要的 style */
+        .faq-content {
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .faq-item.active .faq-content {
+            max-height: 200px; /* 設定一個足夠的高度 */
+            opacity: 1;
+        }
+        .faq-icon {
+            transition: transform 0.3s ease;
+        }
+        .faq-item.active .faq-icon {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+
+<body class="bg-bg-main font-sans text-gray-700">
+
+    <div id="header" class="sticky top-0 z-50"></div>
+
+    <main class="max-w-screen-xl mx-auto px-6 md:px-12 py-24 md:py-32">
+        
+        <div class="text-center mb-20">
+            <h1 class="text-4xl md:text-5xl font-bold text-primary mb-6 tracking-tight">簡易身體表現功能量表 (SPPB)</h1>
+            <p class="text-lg text-gray-600 font-light leading-relaxed max-w-3xl mx-auto">
+                SPPB 是一套經科學驗證的工具，用於評估下肢功能和行動能力。請依序完成以下三項測試，系統將自動計算您的得分。
+            </p>
+        </div>
+
+        <form id="sppb-form" class="max-w-4xl mx-auto space-y-16 md:space-y-24">
+
+            <section class="bg-white rounded-[2rem] p-8 md:p-12 shadow-sm">
+                <div class="flex items-center mb-8">
+                    <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-4">
+                        <span class="text-primary font-bold text-xl">1</span>
+                    </div>
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-900">平衡測試</h2>
+                </div>
+                <p class="text-gray-600 font-light leading-relaxed mb-8">
+                    腳用三種不同站法，每種站立 10 秒。使用三個位置的分數總和。
+                </p>
+                
+                <div class="space-y-8">
+                    <div>
+                        <h3 class="text-lg font-bold text-primary mb-4">A. 並排站立 (Side-by-side stand)</h3>
+                        <div class="space-y-3 pl-4">
+                            <label class="flex items-center cursor-pointer group">
+                                <input type="radio" name="balance_a" value="1" class="w-5 h-5 cursor-pointer">
+                                <span class="ml-3 text-gray-700 group-hover:text-primary transition">1 分：保持 10 秒 </span>
+                            </label>
+                            <label class="flex items-center cursor-pointer group">
+                                <input type="radio" name="balance_a" value="0" class="w-5 h-5 cursor-pointer">
+                                <span class="ml-3 text-gray-700 group-hover:text-primary transition">0 分：少於 10 秒 </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold text-primary mb-4">B. 半並排站立 (Semi-tandem stand) </h3>
+                        <div class="space-y-3 pl-4">
+                            <label class="flex items-center cursor-pointer group">
+                                <input type="radio" name="balance_b" value="1" class="w-5 h-5 cursor-pointer">
+                                <span class="ml-3 text-gray-700 group-hover:text-primary transition">1 分：保持 10 秒 </span>
+                            </label>
+                            <label class="flex items-center cursor-pointer group">
+                                <input type="radio" name="balance_b" value="0" class="w-5 h-5 cursor-pointer">
+                                <span class="ml-3 text-gray-700 group-hover:text-primary transition">0 分：少於 10 秒 </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold text-primary mb-4">C. 直線站立 (Tandem stand) </h3>
+                        <div class="space-y-3 pl-4">
+                            <label class="flex items-center cursor-pointer group">
+                                <input type="radio" name="balance_c" value="2" class="w-5 h-5 cursor-pointer">
+                                <span class="ml-3 text-gray-700 group-hover:text-primary transition">2 分：保持 10 秒 </span>
+                            </label>
+                            <label class="flex items-center cursor-pointer group">
+                                <input type="radio" name="balance_c" value="1" class="w-5 h-5 cursor-pointer">
+                                <span class="ml-3 text-gray-700 group-hover:text-primary transition">1 分：保持 3-9.99 秒 </span>
+                            </label>
+                            <label class="flex items-center cursor-pointer group">
+                                <input type="radio" name="balance_c" value="0" class="w-5 h-5 cursor-pointer">
+                                <span class="ml-3 text-gray-700 group-hover:text-primary transition">0 分：保持 < 3 秒 </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-8 pt-6 border-t border-gray-100 text-right">
+                    <span class="text-gray-500 font-medium mr-2">平衡測試小計:</span>
+                    <span id="score-balance" class="text-xl font-bold text-primary">0</span>
+                    <span class="text-gray-400 text-sm"> / 4</span>
+                </div>
+            </section>
+
+
+            <section class="bg-white rounded-[2rem] p-8 md:p-12 shadow-sm">
+                <div class="flex items-center mb-8">
+                    <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-4">
+                        <span class="text-primary font-bold text-xl">2</span>
+                    </div>
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-900">步行速度測試</h2>
+                </div>
+                <p class="text-gray-600 font-light leading-relaxed mb-8">
+                    測量走四公尺所需的時間（以平常速度行走）。
+                </p>
+                
+                <div class="space-y-3 pl-4">
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="radio" name="gait_speed" value="4" class="w-5 h-5 cursor-pointer">
+                        <span class="ml-3 text-gray-700 group-hover:text-primary transition">4 分：< 4.82 秒 </span>
+                    </label>
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="radio" name="gait_speed" value="3" class="w-5 h-5 cursor-pointer">
+                        <span class="ml-3 text-gray-700 group-hover:text-primary transition">3 分：4.82 - 6.20 秒 </span>
+                    </label>
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="radio" name="gait_speed" value="2" class="w-5 h-5 cursor-pointer">
+                        <span class="ml-3 text-gray-700 group-hover:text-primary transition">2 分：6.21 - 8.70 秒 </span>
+                    </label>
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="radio" name="gait_speed" value="1" class="w-5 h-5 cursor-pointer">
+                        <span class="ml-3 text-gray-700 group-hover:text-primary transition">1 分：> 8.70 秒 </span>
+                    </label>
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="radio" name="gait_speed" value="0" class="w-5 h-5 cursor-pointer">
+                        <span class="ml-3 text-gray-700 group-hover:text-primary transition">0 分：無法完成 </span>
+                    </label>
+                </div>
+                <div class="mt-8 pt-6 border-t border-gray-100 text-right">
+                    <span class="text-gray-500 font-medium mr-2">步行測試小計:</span>
+                    <span id="score-gait" class="text-xl font-bold text-primary">0</span>
+                    <span class="text-gray-400 text-sm"> / 4</span>
+                </div>
+            </section>
+
+
+            <section class="bg-white rounded-[2rem] p-8 md:p-12 shadow-sm">
+                <div class="flex items-center mb-8">
+                    <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-4">
+                        <span class="text-primary font-bold text-xl">3</span>
+                    </div>
+                    <h2 class="text-2xl md:text-3xl font-bold text-gray-900">椅子起站測試</h2>
+                </div>
+                <p class="text-gray-600 font-light leading-relaxed mb-8">
+                    測量雙手抱胸，連續起立坐下五次所需的時間 。
+                </p>
+                
+                <div class="space-y-3 pl-4">
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="radio" name="chair_stand" value="4" class="w-5 h-5 cursor-pointer">
+                        <span class="ml-3 text-gray-700 group-hover:text-primary transition">4 分：< 11.19 秒 </span>
+                    </label>
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="radio" name="chair_stand" value="3" class="w-5 h-5 cursor-pointer">
+                        <span class="ml-3 text-gray-700 group-hover:text-primary transition">3 分：11.2 - 13.69 秒 </span>
+                    </label>
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="radio" name="chair_stand" value="2" class="w-5 h-5 cursor-pointer">
+                        <span class="ml-3 text-gray-700 group-hover:text-primary transition">2 分：13.7 - 16.69 秒 </span>
+                    </label>
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="radio" name="chair_stand" value="1" class="w-5 h-5 cursor-pointer">
+                        <span class="ml-3 text-gray-700 group-hover:text-primary transition">1 分：16.7 - 59.9 秒 </span>
+                    </label>
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="radio" name="chair_stand" value="0" class="w-5 h-5 cursor-pointer">
+                        <span class="ml-3 text-gray-700 group-hover:text-primary transition">0 分：> 60 秒或無法完成 </span>
+                    </label>
+                </div>
+                <div class="mt-8 pt-6 border-t border-gray-100 text-right">
+                    <span class="text-gray-500 font-medium mr-2">起站測試小計:</span>
+                    <span id="score-chair" class="text-xl font-bold text-primary">0</span>
+                    <span class="text-gray-400 text-sm"> / 4</span>
+                </div>
+            </section>
+
+
+            <section class="bg-primary/5 rounded-[2rem] p-8 md:p-12 text-center border-2 border-primary/20">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2">您的總分</h2>
+                
+                <div class="text-6xl font-bold text-primary my-6" id="total-score">0</div>
+                
+                <div class="flex flex-col md:flex-row justify-center gap-8 md:gap-16 mb-12">
+                    <div id="result-normal" class="bg-white/50 p-6 rounded-2xl shadow-sm flex-1 opacity-50 transition-all duration-300">
+                        <span class="block text-4xl font-bold text-primary mb-2">10-12 分</span>
+                        <span class="text-gray-700 font-medium text-lg">行動能力正常 </span>
+                    </div>
+                    <div id="result-abnormal" class="bg-white/50 p-6 rounded-2xl shadow-sm flex-1 opacity-50 transition-all duration-300">
+                        <span class="block text-4xl font-bold text-red-500 mb-2">0-9 分</span>
+                        <span class="text-gray-700 font-medium text-lg">行動能力障礙 </span>
+                    </div>
+                </div>
+                
+                <p class="text-gray-600 font-light leading-relaxed mb-8">
+                    此檢測結果僅供參考，若您對自己的行動能力有任何疑慮，建議諮詢專業醫師或物理治療師進行全面評估。
+                </p>
+                
+                <a href="#" class="inline-flex items-center bg-primary hover:bg-primary-dark text-white text-lg font-medium px-10 py-4 rounded-full transition shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-1">
+                    預約專業評估 <i class="fa-solid fa-arrow-right ml-3 text-sm"></i>
+                </a>
+            </section>
+
+        </form>
+
+    </main>
+
+    <div id="footer"></div>
+
+    <script>
+        // 等待頁面載入完成
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('sppb-form');
+            
+            // 監聽表單內所有 input 的變化
+            form.addEventListener('change', calculateScore);
+
+            function calculateScore() {
+                // 1. 取得各項分數，如果沒選則預設為 0
+                const balanceA = parseInt(document.querySelector('input[name="balance_a"]:checked')?.value || 0);
+                const balanceB = parseInt(document.querySelector('input[name="balance_b"]:checked')?.value || 0);
+                const balanceC = parseInt(document.querySelector('input[name="balance_c"]:checked')?.value || 0);
+                
+                const gaitSpeed = parseInt(document.querySelector('input[name="gait_speed"]:checked')?.value || 0);
+                const chairStand = parseInt(document.querySelector('input[name="chair_stand"]:checked')?.value || 0);
+
+                // 2. 計算小計
+                // 平衡測試總分 = A + B + C (注意 SPPB 規則：平衡總分最高 4 分)
+                // 但根據您的表單設計：
+                // A: 0/1, B: 0/1, C: 0/1/2 -> 加總最高剛好 4 分 (1+1+2=4)，所以直接加總即可
+                const balanceTotal = balanceA + balanceB + balanceC;
+
+                // 3. 計算總分
+                const totalScore = balanceTotal + gaitSpeed + chairStand;
+
+                // 4. 更新畫面顯示
+                document.getElementById('score-balance').textContent = balanceTotal;
+                document.getElementById('score-gait').textContent = gaitSpeed;
+                document.getElementById('score-chair').textContent = chairStand;
+                
+                // 更新大大的總分
+                const totalScoreElement = document.getElementById('total-score');
+                totalScoreElement.textContent = totalScore;
+
+                // 5. 更新結果狀態樣式
+                const normalBox = document.getElementById('result-normal');
+                const abnormalBox = document.getElementById('result-abnormal');
+
+                // 重置樣式 (半透明)
+                normalBox.className = "bg-white/50 p-6 rounded-2xl shadow-sm flex-1 opacity-50 transition-all duration-300 grayscale";
+                abnormalBox.className = "bg-white/50 p-6 rounded-2xl shadow-sm flex-1 opacity-50 transition-all duration-300 grayscale";
+
+                // 根據分數點亮對應的盒子
+                if (totalScore >= 10) {
+                    // 正常：亮起來，顯示原本顏色
+                    normalBox.className = "bg-white p-6 rounded-2xl shadow-lg border-2 border-primary flex-1 opacity-100 transform scale-105 transition-all duration-300";
+                    totalScoreElement.className = "text-6xl font-bold text-primary my-6"; // 分數變綠色
+                } else {
+                    // 異常：亮起來，變紅色系
+                    abnormalBox.className = "bg-white p-6 rounded-2xl shadow-lg border-2 border-red-400 flex-1 opacity-100 transform scale-105 transition-all duration-300";
+                    totalScoreElement.className = "text-6xl font-bold text-red-500 my-6"; // 分數變紅色
+                }
+            }
+            
+            // 初始化執行一次 (歸零)
+            calculateScore();
+        });
+    </script>
+
+</body>
+</html>

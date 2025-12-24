@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foot Health - Med Times</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // 使用與其他頁面一致的色碼
+                        'primary': '#679396',
+                        'primary-dark': '#3a5e5f',
+                        'bg-main': '#F5F5F5',
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        'xl': '1rem',
+                        '2xl': '1.5rem',
+                        '3xl': '2rem',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="css/style.css">
+
+    <script>
+    // 1. 定義載入 HTML 的函式
+    async function loadHTML(selector, url) {
+        try {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`無法載入 ${url}`);
+            const text = await resp.text();
+            document.querySelector(selector).innerHTML = text;
+            
+            // ★ 關鍵點：載入 Header 後，立刻啟動手機選單功能
+            if (selector === '#header') {
+                initMobileMenu();
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    // 2. 初始化手機選單功能的函式
+    function initMobileMenu() {
+        const btn = document.getElementById('mobile-menu-btn');
+        const menu = document.getElementById('mobile-menu');
+        const icon = document.getElementById('menu-icon');
+        let isMenuOpen = false;
+
+        // 確保元素都存在才執行
+        if (btn && menu && icon) {
+            btn.addEventListener('click', () => {
+                isMenuOpen = !isMenuOpen; // 切換開關狀態
+
+                if (isMenuOpen) {
+                    // --- 打開選單 ---
+                    menu.style.maxHeight = "500px"; // 設定一個足夠大的高度讓內容顯示
+                    // 切換圖示：變成 X
+                    icon.classList.remove('fa-bars');
+                    icon.classList.add('fa-xmark');
+                    icon.style.transform = "rotate(90deg)"; // 旋轉特效
+                } else {
+                    // --- 關閉選單 ---
+                    menu.style.maxHeight = "0px"; // 高度歸零
+                    // 切換圖示：變回漢堡
+                    icon.classList.remove('fa-xmark');
+                    icon.classList.add('fa-bars');
+                    icon.style.transform = "rotate(0deg)";
+                }
+            });
+        }
+        
+        // (選用功能) 自動將當前頁面的連結變色 (Highlight)
+        const currentPath = window.location.pathname.split('/').pop() || 'index.html';
+        const links = document.querySelectorAll('nav a');
+        links.forEach(link => {
+            // 比對 href 是否等於當前檔名
+            if (link.getAttribute('href') === currentPath) {
+                link.classList.add('text-primary'); // 變主色
+                link.classList.remove('text-gray-500');
+            }
+        });
+    }
+
+    // 3. 執行載入
+    window.addEventListener('DOMContentLoaded', () => {
+        loadHTML('#header', 'partials/header.html');
+        loadHTML('#footer', 'partials/footer.html');
+    });
+</script>
+    
+    <style>
+        /* FAQ 收折動畫需要的 style */
+        .faq-content {
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .faq-item.active .faq-content {
+            max-height: 200px; /* 設定一個足夠的高度 */
+            opacity: 1;
+        }
+        .faq-icon {
+            transition: transform 0.3s ease;
+        }
+        .faq-item.active .faq-icon {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+
+<body class="bg-[#F5F5F5]">
+
+    <div id="header" class="fixed top-0 left-0 right-0 z-50 bg-[#F5F5F5]/80 backdrop-blur-md">
+        <nav class="max-w-screen-xl mx-auto px-6 md:px-12 h-[100px] flex items-center justify-between">
+            <a href="/" class="text-3xl font-bold text-primary">Med Times</a>
+            <div class="hidden md:flex items-center space-x-10 font-medium text-sm tracking-widest">
+                <a href="#" class="text-primary">關於足健康</a>
+                <a href="#" class="text-gray-500 hover:text-primary transition">資訊專欄</a>
+                <a href="#" class="text-gray-500 hover:text-primary transition">行動力檢測</a>
+                <a href="#" class="text-gray-500 hover:text-primary transition">常見問題</a>
+                <a href="#" class="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-full transition text-xs">BUTTON</a>
+            </div>
+        </nav>
+    </div>
+    <main class="max-w-screen-xl mx-auto px-6 md:px-12 py-32 md:py-48">
+        
+        <section class="flex flex-col md:flex-row items-center gap-20 md:gap-32 mb-32 md:mb-48">
+            <div class="flex-1 space-y-8">
+                <h1 class="text-5xl md:text-6xl font-bold text-gray-900 tracking-tight leading-tight">
+                    <span class="text-primary">足部健康</span>，<br>是全身的基石。
+                </h1>
+                <div class="w-16 h-1 bg-primary mb-8"></div> <p class="text-lg text-gray-600 leading-loose font-light">
+                    足部是人體運動與平衡的根基，從嬰幼兒發展、學生體態、上班族久站久坐，到運動員表現與銀髮族行動力，足健康都是影響全身穩定與功能的核心。當足弓結構、足壓分佈或下肢肌力出現問題，連帶會影響姿勢、關節與代謝健康。
+
+                </p>
+                <p class="text-lg text-gray-600 leading-loose font-light">
+                    展望未來台灣的足健康生態圈，應整合專科醫療評估、運動與復健處方、營養與肌力支持、個人化鞋具與輔具設計、AI智慧行動監測系統，以及推動友善城市與公共空間的政策，共同打造「從腳開始」，促進全民健康行動力。
+                </p>
+            </div>
+            <div class="flex-1">
+                <img src="./images/hero.png" alt="足部健康示意圖" class="w-full h-auto   object-cover">
+            </div>
+        </section>
+
+
+        <section class="text-center max-w-4xl mx-auto mb-32 md:mb-48">
+            <h2 class="text-sm font-bold text-primary tracking-[0.2em] uppercase mb-8">Our Mission</h2>
+            <p class="text-3xl md:text-4xl font-bold text-gray-900 leading-normal">
+                透過科學實證的資訊與創新工具，<br class="hidden md:block">
+                提升大眾對 <span class="relative inline-block px-2 z-10 before:content-[''] before:absolute before:left-0 before:bottom-2 before:w-full before:h-4 before:bg-primary/20 before:-z-10">足部健康</span> 的意識，<br class="hidden md:block">
+                讓每個人都能享受自由行動的生活。
+            </p>
+        </section>
+
+
+        <section class="mb-32 md:mb-48">
+            <div class="text-center mb-20">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">足部健康的三大支柱</h2>
+                <p class="text-gray-500 font-light">The Three Pillars of Foot Health</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-16 md:gap-24">
+                
+                <div class="text-center group">
+                    <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-8 group-hover:bg-primary/20 transition-colors">
+                        <i class="fa-solid fa-shoe-prints text-3xl text-primary"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-6">正確的結構與支撐</h3>
+                    <p class="text-gray-600 leading-loose font-light">
+                        了解自己的足弓類型，選擇合適的鞋具和鞋墊，提供足部所需的穩定與避震。
+                    </p>
+                </div>
+
+                <div class="text-center group">
+                    <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-8 group-hover:bg-primary/20 transition-colors">
+                        <i class="fa-solid fa-person-running text-3xl text-primary"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-6">肌力與柔軟度訓練</h3>
+                    <p class="text-gray-600 leading-loose font-light">
+                        透過針對性的運動強化足踝肌群，並伸展緊繃的筋膜，提升足部的功能性。
+                    </p>
+                </div>
+
+                <div class="text-center group">
+                    <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-8 group-hover:bg-primary/20 transition-colors">
+                        <i class="fa-solid fa-heart-pulse text-3xl text-primary"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-6">循環與日常護理</h3>
+                    <p class="text-gray-600 leading-loose font-light">
+                        關注下肢血液循環，定期檢查足部皮膚狀況，並給予適當的按摩與放鬆。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+
+        <section class="text-center border-y border-primary/20 py-24 md:py-32">
+    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-8">想了解自己的足部狀況嗎？</h2>
+    <p class="text-lg text-gray-600 font-light mb-12 max-w-2xl mx-auto leading-relaxed">
+        只需幾分鐘，透過我們簡易的線上行動力檢測，<br>初步評估您的足部健康風險，邁出改變的第一步。
+    </p>
+    
+    <a href="assessment.html" class="inline-flex items-center bg-primary hover:bg-primary-dark text-white text-lg font-medium px-10 py-4 rounded-full transition shadow-lg hover:shadow-xl hover:-translate-y-1">
+        立即開始檢測 <i class="fa-solid fa-arrow-right ml-3"></i>
+    </a>
+
+</section>
+
+    <div id="footer"></div>
+    </body>
+</html>
