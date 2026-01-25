@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Foot Health - Med Times</title>
+    <title>足部健康專區 - Med Times</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,6 @@
             theme: {
                 extend: {
                     colors: {
-                        // 使用與其他頁面一致的色碼
                         'primary': '#679396',
                         'primary-dark': '#3a5e5f',
                         'bg-main': '#F5F5F5',
@@ -34,18 +33,15 @@
     </script>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <link rel="stylesheet" href="css/style.css">
 
     <script>
-    // 1. 載入 Header/Footer 的函式
+    // 1. 載入 Header/Footer
     async function loadHTML(selector, url) {
         try {
             const resp = await fetch(url);
             const text = await resp.text();
             document.querySelector(selector).innerHTML = text;
-            
-            // 如果載入的是 header，初始化手機選單 (如果您有這個功能)
             if (selector === '#header' && typeof initMobileMenu === 'function') {
                 initMobileMenu();
             }
@@ -54,161 +50,144 @@
         }
     }
 
-    // 2. 抓取 Med Times 文章的函式 (API 串接)
-    async function fetchArticles() {
+    // ★ 核心函式：取得 'foot-health' 標籤的 ID 並抓文章
+    async function fetchFootHealthArticles() {
         const container = document.getElementById('articles-container');
-        if (!container) return; // 如果找不到容器就不執行
+        if (!container) return;
 
-        // Med Times API 網址 (抓取 6 篇，包含圖片資料)
-        const apiUrl = 'https://medtimes.com.tw/wp-json/wp/v2/posts?per_page=6&_embed';
+        // 步驟 1: 設定我們要找的標籤代號 (Slug)
+        const targetSlug = 'foot-health';
+        const baseUrl = 'https://medtimes.com.tw/wp-json/wp/v2';
 
         try {
-            const response = await fetch(apiUrl);
-            if (!response.ok) throw new Error('API 連線失敗');
-            const posts = await response.json();
+            // 步驟 2: 先問 API 這個標籤的 ID 是多少
+            // 搜尋 tags 中 slug 等於 'foot-health' 的項目
+            const tagResp = await fetch(`${baseUrl}/tags?slug=${targetSlug}`);
+            const tags = await tagResp.json();
 
-            // 清空「載入中」的提示文字
-            container.innerHTML = '';
+            if (tags.length === 0) {
+                console.warn('找不到 foot-health 標籤，無法篩選。');
+                container.innerHTML = `<p class="col-span-full text-center text-gray-500">目前無法取得足健康分類文章。</p>`;
+                return;
+            }
 
-            // 開始處理每一篇文章
+            const tagId = tags[0].id; // 取得 ID
+            console.log(`抓到標籤 ID: ${tagId} (${tags[0].name})`);
+
+            // 步驟 3: 使用這個 ID 來抓文章 (tags=ID)
+            // _embed 參數是為了抓圖片
+            const postsResp = await fetch(`${baseUrl}/posts?tags=${tagId}&per_page=6&_embed`);
+            if (!postsResp.ok) throw new Error('文章 API 連線失敗');
+            
+            const posts = await postsResp.json();
+
+            // 步驟 4: 清空 Loading 畫面並渲染文章
+            container.innerHTML = ''; 
+
+            if (posts.length === 0) {
+                container.innerHTML = `<p class="col-span-full text-center text-gray-500">此分類目前沒有文章。</p>`;
+                return;
+            }
+
             posts.forEach(post => {
-                // --- 資料處理區 ---
-                
-                // A. 處理圖片：檢查是否有特色圖片，沒有就用預設圖
+                // 處理特色圖片 (如果沒有就用預設圖)
                 let imgUrl = 'https://via.placeholder.com/600x400?text=MedTimes';
-                // 檢查路徑：_embedded -> wp:featuredmedia -> 第0張圖 -> source_url
-                if (post._embedded && 
-                    post._embedded['wp:featuredmedia'] && 
-                    post._embedded['wp:featuredmedia'][0]) {
+                if (post._embedded && post._embedded['wp:featuredmedia'] && post._embedded['wp:featuredmedia'][0]) {
                     imgUrl = post._embedded['wp:featuredmedia'][0].source_url;
                 }
 
-                // B. 處理日期：格式化時間
+                // 處理日期
                 const dateObj = new Date(post.date);
                 const dateStr = `${dateObj.getFullYear()}.${(dateObj.getMonth()+1).toString().padStart(2, '0')}.${dateObj.getDate().toString().padStart(2, '0')}`;
 
-                // C. 處理分類：嘗試抓取分類名稱
-                let category = '醫療新知';
-                if (post._embedded && 
-                    post._embedded['wp:term'] && 
-                    post._embedded['wp:term'][0] && 
-                    post._embedded['wp:term'][0][0]) {
-                    category = post._embedded['wp:term'][0][0].name;
+                // 處理分類名稱 (顯示在卡片上的小字)
+                let categoryName = '醫療專欄';
+                if (post._embedded && post._embedded['wp:term']) {
+                    const cats = post._embedded['wp:term'].flat().filter(t => t.taxonomy === 'category');
+                    if (cats.length > 0) categoryName = cats[0].name;
                 }
 
-                // --- HTML 生成區 (使用反引號 ` ) ---
                 const html = `
                     <article class="group flex flex-col h-full bg-transparent">
-                        <a href="${post.link}" target="_blank" class="block relative h-64 overflow-hidden rounded-3xl transition-transform duration-300 transform group-hover:-translate-y-2">
+                        <a href="${post.link}" target="_blank" class="block relative h-64 overflow-hidden rounded-3xl transition-transform duration-300 transform group-hover:-translate-y-2 shadow-sm">
                             <img src="${imgUrl}" alt="${post.title.rendered}" class="w-full h-full object-cover">
+                            <div class="absolute top-4 left-4 bg-primary text-white text-xs px-3 py-1 rounded-full shadow-md">
+                                足健康
+                            </div>
                         </a>
                         
-                        <div class="pt-8 flex-1 flex flex-col justify-between">
+                        <div class="pt-6 flex-1 flex flex-col justify-between">
                             <div>
-                                <div class="flex items-center space-x-4 text-sm text-gray-400 font-light mb-4">
+                                <div class="flex items-center space-x-3 text-sm text-gray-400 font-light mb-3">
                                     <p>${dateStr}</p>
                                     <span class="text-primary">|</span>
-                                    <span class="hover:text-primary transition">${category}</span>
+                                    <span class="hover:text-primary transition">${categoryName}</span>
                                 </div>
-                                <h2 class="text-2xl font-bold text-gray-900 mb-4 leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+                                <h2 class="text-xl md:text-2xl font-bold text-gray-900 mb-3 leading-snug line-clamp-2 group-hover:text-primary transition-colors">
                                     <a href="${post.link}" target="_blank">${post.title.rendered}</a>
                                 </h2>
-                                <div class="text-gray-600 font-light leading-loose mb-8 line-clamp-3">
+                                <div class="text-gray-600 font-light leading-relaxed mb-6 line-clamp-3 text-sm md:text-base">
                                     ${post.excerpt.rendered}
                                 </div>
                             </div>
                             <div class="mt-auto">
-                                <a href="${post.link}" target="_blank" class="inline-flex items-center text-primary font-medium hover:underline tracking-wider">
-                                    閱讀更多 <i class="fa-solid fa-arrow-right ml-3 text-sm"></i>
+                                <a href="${post.link}" target="_blank" class="inline-flex items-center text-primary font-medium hover:underline tracking-wider text-sm">
+                                    閱讀更多 <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
                                 </a>
                             </div>
                         </div>
                     </article>
                 `;
-
-                // 將做好的卡片放入容器
                 container.insertAdjacentHTML('beforeend', html);
             });
 
         } catch (error) {
-            console.error('文章載入錯誤:', error);
+            console.error('API 錯誤:', error);
             container.innerHTML = `
                 <div class="col-span-full text-center py-12">
-                    <p class="text-gray-400 mb-4">目前無法載入外部文章，請稍後再試。</p>
-                    <a href="https://medtimes.com.tw/" target="_blank" class="text-primary border-b border-primary hover:opacity-80">前往 Med Times 官網</a>
+                    <p class="text-gray-400 mb-4">無法載入文章資料。</p>
+                    <a href="https://medtimes.com.tw/tag/foot-health/" target="_blank" class="text-primary border-b border-primary hover:opacity-80">前往 Med Times 官網查看</a>
                 </div>
             `;
         }
     }
 
-    // 3. 頁面載入完成後執行
     document.addEventListener('DOMContentLoaded', () => {
-        // 載入共用區塊
         loadHTML('#header', 'partials/header.html');
         loadHTML('#footer', 'partials/footer.html');
-        
-        // 執行抓文章
-        fetchArticles();
+        // 執行抓取
+        fetchFootHealthArticles();
     });
-</script>
-    
-    <style>
-        /* FAQ 收折動畫需要的 style */
-        .faq-content {
-            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
-            max-height: 0;
-            opacity: 0;
-            overflow: hidden;
-        }
-        .faq-item.active .faq-content {
-            max-height: 200px; /* 設定一個足夠的高度 */
-            opacity: 1;
-        }
-        .faq-icon {
-            transition: transform 0.3s ease;
-        }
-        .faq-item.active .faq-icon {
-            transform: rotate(180deg);
-        }
-    </style>
+    </script>
 </head>
 
-
 <body class="bg-[#F5F5F5]">
+    <div id="header" class="fixed top-0 left-0 right-0 z-50 bg-[#F5F5F5]/90 backdrop-blur-md shadow-sm"></div>
 
-    <div id="header" class="fixed top-0 left-0 right-0 z-50 bg-[#F5F5F5]/80 backdrop-blur-md">
-        <nav class="max-w-screen-xl mx-auto px-6 md:px-12 h-[100px] flex items-center justify-between">
-            <a href="/" class="text-3xl font-bold text-primary">Med Times</a>
-            <div class="hidden md:flex items-center space-x-10 font-medium text-sm tracking-widest">
-                <a href="#" class="text-gray-500 hover:text-primary transition">關於足健康</a>
-                <a href="#" class="text-primary">資訊專欄</a>
-                <a href="#" class="text-gray-500 hover:text-primary transition">行動力檢測</a>
-                <a href="#" class="text-gray-500 hover:text-primary transition">常見問題</a>
-                <a href="#" class="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-full transition text-xs">BUTTON</a>
-            </div>
-        </nav>
-    </div>
     <main class="max-w-screen-xl mx-auto px-6 md:px-12 py-32 md:py-48">
-        
-        <div class="mb-24 md:mb-32">
-            <h1 class="text-5xl md:text-6xl font-bold text-gray-900 tracking-tight leading-tight mb-8">
-                專題文章
-            </h1>
-            <div class="w-16 h-1 bg-primary"></div>
+        <div class="mb-16 md:mb-24 flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+                <h1 class="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight leading-tight mb-4">
+                    足部健康專欄
+                </h1>
+                <div class="w-16 h-1 bg-primary mb-4"></div>
+                <p class="text-gray-500 font-light max-w-2xl">
+                    精選 Med Times 關於足部護理、病症解析與復健運動的專業文章。
+                </p>
+            </div>
+            <a href="https://medtimes.com.tw/tag/foot-health/" target="_blank" class="hidden md:inline-flex items-center text-gray-400 hover:text-primary transition text-sm">
+                查看更多 <i class="fa-solid fa-external-link-alt ml-2"></i>
+            </a>
         </div>
 
-        <div id="articles-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 md:gap-16 mb-32">
-    <div class="col-span-full text-center text-gray-400 py-20">
-        <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-4"></i>
-        <p>正在同步 Med Times 最新文章...</p>
-    </div>
-</div>
-            
+        <div id="articles-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-12 mb-32">
+            <div class="col-span-full flex flex-col items-center justify-center text-gray-400 py-20 min-h-[300px]">
+                <i class="fa-solid fa-circle-notch fa-spin text-4xl mb-4 text-primary/50"></i>
+                <p class="font-light tracking-wider">正在載入足健康專欄文章...</p>
+            </div>
+        </div>
+    </main>
 
-        
-
-   
     <div id="footer"></div>
-        
-
+</body>
 </html>
