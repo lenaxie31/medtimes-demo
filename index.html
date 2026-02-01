@@ -161,43 +161,148 @@
 
     
 <section class="w-full py-20 md:py-32 bg-white relative overflow-hidden">
-        
-        <div class="absolute top-0 right-0 w-2/3 h-full bg-bg-main/50 -skew-x-12 translate-x-1/3 z-0"></div>
+    
+    <div class="absolute top-0 right-0 w-2/3 h-full bg-bg-main/50 -skew-x-12 translate-x-1/3 z-0"></div>
 
-        <div class="max-w-screen-xl mx-auto px-6 md:px-12 relative z-10">
-            <div class="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-24">
+    <div class="max-w-screen-xl mx-auto px-6 md:px-12 relative z-10">
+        <div class="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-24">
+            
+            <div class="w-full md:w-5/12 space-y-6 text-center md:text-left">
+                <span class="inline-block py-1 px-3 rounded-full bg-primary/10 text-primary text-sm font-bold tracking-widest">
+                    VIDEO HIGHLIGHT
+                </span>
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
+                    30秒快速了解<br>
+                    <span class="text-primary">足部健康關鍵</span>
+                </h2>
+                <p class="text-gray-500 leading-loose font-light text-lg">
+                    透過簡短的影片演示，帶您直擊足部力學運作的奧秘。只需片刻，讓您對雙腳的健康有全新的認識。
+                </p>
                 
-                <div class="w-full md:w-5/12 space-y-6 text-center md:text-left">
-                    <span class="inline-block py-1 px-3 rounded-full bg-primary/10 text-primary text-sm font-bold tracking-widest">
-                        VIDEO HIGHLIGHT
-                    </span>
-                    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 leading-tight">
-                        30秒快速了解<br>
-                        <span class="text-primary">足部健康關鍵</span>
-                    </h2>
-                    <p class="text-gray-500 leading-loose font-light text-lg">
-                        透過簡短的影片演示，帶您直擊足部力學運作的奧秘。只需片刻，讓您對雙腳的健康有全新的認識。
-                    </p>
-                    
-                    <div class="w-20 h-1 bg-primary/20 rounded-full mx-auto md:mx-0 mt-8"></div>
-                </div>
-
-                <div class="w-full md:w-5/12 flex justify-center md:justify-start">
-    <div class="relative w-[280px] md:w-[320px] aspect-[9/16] rounded-[2.5rem] shadow-2xl overflow-hidden border-[8px] border-white ring-1 ring-gray-200 transform hover:-translate-y-2 transition-transform duration-500">
-        
-        <video autoplay loop muted playsinline class="w-full h-full object-cover bg-black">
-            <source src="https://drive.google.com/uc?export=download&id=17fOxe-MDJ6FI_NNrS227UriEO3zooQEs" type="video/mp4">
-            您的瀏覽器不支援 HTML5 影片標籤。
-        </video>
-
-        <div class="absolute top-4 left-1/2 -translate-x-1/2 w-16 h-1.5 bg-white/20 rounded-full backdrop-blur-md z-20"></div>
-        
-        <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
-    </div>
-</div>
+                <div class="w-20 h-1 bg-primary/20 rounded-full mx-auto md:mx-0 mt-8"></div>
+                
+                <div class="flex justify-center md:justify-start gap-2 mt-4" id="video-dots">
+                    </div>
             </div>
+
+            <div class="w-full md:w-5/12 flex justify-center md:justify-start">
+                <div class="relative w-[280px] md:w-[320px] aspect-[9/16] rounded-[2.5rem] shadow-2xl overflow-hidden border-[8px] border-white ring-1 ring-gray-200 transform hover:-translate-y-2 transition-transform duration-500 bg-black group">
+                    
+                    <iframe 
+                        id="yt-player"
+                        class="w-full h-full object-cover"
+                        src="" 
+                        title="YouTube video player" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                        allowfullscreen>
+                    </iframe>
+
+                    <div class="absolute top-4 left-1/2 -translate-x-1/2 w-16 h-1.5 bg-white/20 rounded-full backdrop-blur-md z-20 pointer-events-none"></div>
+                    
+                    <button onclick="changeVideo(-1)" class="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/30 hover:bg-black/50 text-white rounded-full flex items-center justify-center backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button onclick="changeVideo(1)" class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/30 hover:bg-black/50 text-white rounded-full flex items-center justify-center backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none z-10"></div>
+                </div>
+            </div>
+
         </div>
-    </section>
+    </div>
+
+    <script>
+        // ★★★ 請在這裡填入您的 3 個 YouTube 影片 ID ★★★
+        const videoIds = [
+            'pyyxgrIuRz4',  // 影片 1 的 ID (範例)
+            '8s4TEMsi1pI',  // 影片 2 的 ID (範例)
+            'OSgTgMZ4t2s'   // 影片 3 的 ID (範例)
+        ];
+
+        let currentVideoIndex = 0;
+        const player = document.getElementById('yt-player');
+        const dotsContainer = document.getElementById('video-dots');
+        let autoPlayInterval;
+
+        // 初始化
+        function initPlayer() {
+            updateVideo();
+            createDots();
+            startAutoRotation();
+        }
+
+        // 更新影片來源
+        function updateVideo() {
+            const vid = videoIds[currentVideoIndex];
+            // 參數說明: 
+            // autoplay=1 (自動播放), mute=1 (靜音, 手機瀏覽器限制必須靜音才能自動播)
+            // controls=0 (隱藏控制條), loop=1 (循環), playlist (配合循環使用)
+            // rel=0 (減少推薦無關影片)
+            player.src = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&controls=0&loop=1&playlist=${vid}&rel=0&playsinline=1`;
+            
+            updateDots();
+        }
+
+        // 切換影片 (-1 是上一首, 1 是下一首)
+        function changeVideo(direction) {
+            currentVideoIndex += direction;
+            
+            // 循環邏輯
+            if (currentVideoIndex >= videoIds.length) {
+                currentVideoIndex = 0;
+            } else if (currentVideoIndex < 0) {
+                currentVideoIndex = videoIds.length - 1;
+            }
+
+            updateVideo();
+            resetAutoRotation(); // 手動切換後，重置計時器
+        }
+
+        // 建立下方小圓點
+        function createDots() {
+            if(!dotsContainer) return;
+            dotsContainer.innerHTML = '';
+            videoIds.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = `w-2.5 h-2.5 rounded-full transition-colors duration-300 cursor-pointer ${index === currentVideoIndex ? 'bg-primary' : 'bg-gray-300'}`;
+                dot.onclick = () => {
+                    currentVideoIndex = index;
+                    updateVideo();
+                    resetAutoRotation();
+                };
+                dotsContainer.appendChild(dot);
+            });
+        }
+
+        // 更新小圓點狀態
+        function updateDots() {
+            if(!dotsContainer) return;
+            const dots = dotsContainer.children;
+            for (let i = 0; i < dots.length; i++) {
+                dots[i].className = `w-2.5 h-2.5 rounded-full transition-colors duration-300 cursor-pointer ${i === currentVideoIndex ? 'bg-primary' : 'bg-gray-300'}`;
+            }
+        }
+
+        // 自動輪播 (每 10 秒換下一部，您可以修改 10000 這個數字)
+        function startAutoRotation() {
+            autoPlayInterval = setInterval(() => {
+                changeVideo(1);
+            }, 10000); // 10000 毫秒 = 10 秒
+        }
+
+        // 重置自動輪播計時器 (避免使用者剛切換完馬上又被自動切換)
+        function resetAutoRotation() {
+            clearInterval(autoPlayInterval);
+            startAutoRotation();
+        }
+
+        // 啟動
+        document.addEventListener('DOMContentLoaded', initPlayer);
+    </script>
+</section>
 
    <section class="bg-bg-main px-6 md:px-12 py-24 md:py-32">
     <div class="max-w-screen-xl mx-auto">
