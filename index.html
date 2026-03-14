@@ -245,7 +245,6 @@
 
         <script>
     // --- YouTube API 自動抓取設定 ---
-    // 請手動將這串文字換成你測試成功的金鑰，確保引號內只有代碼
     const API_KEY = 'AIzaSyAYIX74UJQDr-HNOXYy8zvU4sSyCLioXBQ'; 
     const CHANNEL_ID = 'UC68sD-Y8XvG8y_Wk5K9S9vA'; 
     const MAX_RESULTS = 5; 
@@ -256,8 +255,15 @@
     const dotsContainer = document.getElementById('video-dots');
     let autoPlayInterval;
 
+    // 補回手動切換函式
+    window.changeVideo = function(direction) {
+        if (videoIds.length === 0) return;
+        currentVideoIndex = (currentVideoIndex + direction + videoIds.length) % videoIds.length;
+        updateVideo();
+        resetAutoRotation();
+    };
+
     async function fetchLatestVideos() {
-        // 使用 encodeURIComponent 確保參數傳遞安全
         const url = `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=snippet,id&order=date&maxResults=${MAX_RESULTS}&type=video`;
 
         try {
@@ -266,8 +272,7 @@
             
             if (data.error) {
                 console.error('API 報錯:', data.error.message);
-                // 如果報錯，自動切換到備用影片，不讓畫面空白
-                videoIds = ['pyyxgrIuRz4'];
+                videoIds = ['pyyxgrIuRz4']; // 備援影片
                 initPlayer();
                 return;
             }
@@ -292,7 +297,7 @@
     function updateVideo() {
         if (!player || videoIds.length === 0) return;
         const vid = videoIds[currentVideoIndex];
-        // 修正 Embed URL 格式
+        // 修正 Embed 網址
         player.src = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&controls=0&loop=1&playlist=${vid}&rel=0&playsinline=1`;
         updateDots();
     }
@@ -302,7 +307,6 @@
         dotsContainer.innerHTML = '';
         videoIds.forEach((_, index) => {
             const dot = document.createElement('button');
-            // 使用 Tailwind class
             dot.className = `w-2 h-2 rounded-full bg-gray-300 transition-all duration-300`;
             dot.onclick = () => {
                 currentVideoIndex = index;
