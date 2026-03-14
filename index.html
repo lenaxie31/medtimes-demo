@@ -150,6 +150,19 @@
     width: 1.5rem !important;
     background-color: #2D5A27 !important; /* 你的品牌綠色 */
 }
+.video-wrapper {
+    position: relative;
+    padding-bottom: 56.25%; /* 16:9 比例 */
+    height: 0;
+    overflow: hidden;
+    border-radius: 1rem;
+    background: #000;
+}
+.video-wrapper iframe {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+}
     </style>
 </head>
 
@@ -242,9 +255,8 @@
                     </div>
             </div>
         </div>
-
-        <script>
-    // --- YouTube API 自動抓取設定 ---
+<script>
+    // --- 設定區域 ---
     const API_KEY = 'AIzaSyAYIX74UJQDr-HNOXYy8zvU4sSyCLioXBQ'; 
     const CHANNEL_ID = 'UC68sD-Y8XvG8y_Wk5K9S9vA'; 
     const MAX_RESULTS = 5; 
@@ -255,7 +267,7 @@
     const dotsContainer = document.getElementById('video-dots');
     let autoPlayInterval;
 
-    // 補回手動切換函式
+    // 手動切換按鈕 (左右箭頭)
     window.changeVideo = function(direction) {
         if (videoIds.length === 0) return;
         currentVideoIndex = (currentVideoIndex + direction + videoIds.length) % videoIds.length;
@@ -263,7 +275,9 @@
         resetAutoRotation();
     };
 
+    // 抓取 YouTube 資料
     async function fetchLatestVideos() {
+        console.log("正在從 YouTube API 抓取影片...");
         const url = `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=snippet,id&order=date&maxResults=${MAX_RESULTS}&type=video`;
 
         try {
@@ -271,18 +285,14 @@
             const data = await response.json();
             
             if (data.error) {
-                console.error('API 報錯:', data.error.message);
-                videoIds = ['pyyxgrIuRz4']; // 備援影片
-                initPlayer();
-                return;
-            }
-
-            if (data.items && data.items.length > 0) {
+                console.error("API 錯誤:", data.error.message);
+                videoIds = ['pyyxgrIuRz4']; // 備援影片 ID
+            } else {
                 videoIds = data.items.map(item => item.id.videoId);
-                initPlayer();
             }
+            initPlayer();
         } catch (error) {
-            console.error('抓取失敗:', error);
+            console.error("抓取失敗:", error);
             videoIds = ['pyyxgrIuRz4'];
             initPlayer();
         }
@@ -297,8 +307,8 @@
     function updateVideo() {
         if (!player || videoIds.length === 0) return;
         const vid = videoIds[currentVideoIndex];
-        // 修正 Embed 網址
-        player.src = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&controls=0&loop=1&playlist=${vid}&rel=0&playsinline=1`;
+        // 修正 Embed 網址格式
+        player.src = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&loop=1&playlist=${vid}&rel=0`;
         updateDots();
     }
 
@@ -307,6 +317,7 @@
         dotsContainer.innerHTML = '';
         videoIds.forEach((_, index) => {
             const dot = document.createElement('button');
+            // 使用 Tailwind 的樣式
             dot.className = `w-2 h-2 rounded-full bg-gray-300 transition-all duration-300`;
             dot.onclick = () => {
                 currentVideoIndex = index;
@@ -335,10 +346,8 @@
     function startAutoRotation() {
         if (autoPlayInterval) clearInterval(autoPlayInterval);
         autoPlayInterval = setInterval(() => {
-            if (videoIds.length > 0) {
-                currentVideoIndex = (currentVideoIndex + 1) % videoIds.length;
-                updateVideo();
-            }
+            currentVideoIndex = (currentVideoIndex + 1) % videoIds.length;
+            updateVideo();
         }, 5000);
     }
 
@@ -346,7 +355,10 @@
         startAutoRotation();
     }
 
-    document.addEventListener('DOMContentLoaded', fetchLatestVideos);
+    // 啟動程序
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchLatestVideos();
+    });
 </script>
     </section>
 
