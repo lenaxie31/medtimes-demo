@@ -251,17 +251,102 @@
 </div>
 <div id="video-dots"></div>
 <script>
-    // --- 1. 設定區 ---
+    // 1. 【變數定義區】必須放在最上面
     const YT_API_KEY = 'AIzaSyAYIX74UJQDr-HNOXYy8zvU4sSyCLioXBQ'.trim(); 
     const YT_CHANNEL_ID = 'UC68sD-Y8XvG8y_Wk5K9S9vA'; 
     const YT_MAX_RESULTS = 5; 
 
-    // --- 關鍵點：全網頁「只能有這一個」 videoIds 定義 ---
+    // 關鍵：這行一定要存在，且不能重複
     let videoIds = []; 
     let currentVideoIndex = 0;
     let autoPlayInterval;
 
-    // ... 後續的 fetchLatestVideos 等函式內容 ...
+    // 2. 【API 抓取函式】
+    async function fetchLatestVideos() {
+        const url = `https://www.googleapis.com/youtube/v3/search?key=${YT_API_KEY}&channelId=${YT_CHANNEL_ID}&part=snippet,id&order=date&maxResults=${YT_MAX_RESULTS}&type=video&videoEmbeddable=true`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data.items && data.items.length > 0) {
+                videoIds = data.items.map(item => item.id.videoId);
+            } else {
+                videoIds = ['pyyxgrIuRz4']; // 備援
+            }
+        } catch (error) {
+            videoIds = ['pyyxgrIuRz4']; // 備援
+        } finally {
+            initPlayer();
+        }
+    }
+
+    // 3. 【播放器與圓點初始化】
+    function initPlayer() {
+        const player = document.getElementById('yt-player');
+        const dotsContainer = document.getElementById('video-dots');
+        if (!player || !dotsContainer) return;
+
+        updateVideo();
+        createDots();
+        startAutoRotation();
+    }
+
+    function updateVideo() {
+        const player = document.getElementById('yt-player');
+        if (!player || videoIds.length === 0) return;
+        const vid = videoIds[currentVideoIndex];
+        player.src = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&playlist=${vid}&loop=1&rel=0`;
+        updateDots();
+    }
+
+    function createDots() {
+        const dotsContainer = document.getElementById('video-dots');
+        dotsContainer.innerHTML = '';
+        videoIds.forEach((_, index) => {
+            const dot = document.createElement('button');
+            dot.className = index === currentVideoIndex ? 'active' : '';
+            dot.onclick = () => {
+                currentVideoIndex = index;
+                updateVideo();
+                resetRotation();
+            };
+            dotsContainer.appendChild(dot);
+        });
+    }
+
+    function updateDots() {
+        const dotsContainer = document.getElementById('video-dots');
+        const dots = dotsContainer.querySelectorAll('button');
+        dots.forEach((dot, index) => {
+            dot.className = index === currentVideoIndex ? 'active' : '';
+        });
+    }
+
+    function startAutoRotation() {
+        clearInterval(autoPlayInterval);
+        autoPlayInterval = setInterval(() => {
+            if (videoIds.length > 0) {
+                currentVideoIndex = (currentVideoIndex + 1) % videoIds.length;
+                updateVideo();
+            }
+        }, 5000);
+    }
+
+    function resetRotation() {
+        startAutoRotation();
+    }
+
+    // 4. 【全域切換函式】
+    window.changeVideo = function(dir) {
+        if (videoIds.length === 0) return;
+        currentVideoIndex = (currentVideoIndex + dir + videoIds.length) % videoIds.length;
+        updateVideo();
+        resetRotation();
+    };
+
+    // 5. 【啟動】
+    document.addEventListener('DOMContentLoaded', fetchLatestVideos);
 </script>
     </section>
 
