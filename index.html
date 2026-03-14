@@ -251,40 +251,42 @@
 </div>
 <div id="video-dots"></div>
 <script>
-    // --- 1. 配置區域 ---
+    // --- 1. 設定區域 ---
+    // 確保這裡的 Key 是最新且無限制的，去掉空格
     const YT_API_KEY = 'AIzaSyAYIX74UJQDr-HNOXYy8zvU4sSyCLioXBQ'.trim(); 
     const PLAYLIST_ID = 'PL4HYmHsHQr0ftgVf-CPgARpKN3GNKHCbu'; 
-    const DISPLAY_COUNT = 3; // 固定顯示 3 個點點輪播
+    const YT_MAX_RESULTS = 3; // 設定為 3 部影片輪播
 
+    // 關鍵變數定義 (放在最頂端避免報錯)
     let videoIds = []; 
     let currentVideoIndex = 0;
     let autoPlayInterval;
 
     // --- 2. 抓取播放清單 ---
     async function fetchLatestVideos() {
-        console.log("開始抓取播放清單...");
-        const url = `https://www.googleapis.com/youtube/v3/playlistItems?key=${YT_API_KEY}&playlistId=${PLAYLIST_ID}&part=contentDetails&maxResults=10`;
+        console.log("正在從播放清單抓取 3 部影片...");
+        const url = `https://www.googleapis.com/youtube/v3/playlistItems?key=${YT_API_KEY}&playlistId=${PLAYLIST_ID}&part=contentDetails&maxResults=${YT_MAX_RESULTS}`;
 
         try {
             const response = await fetch(url);
             const data = await response.json();
             
             if (data.items && data.items.length > 0) {
-                // 拿到所有影片 ID
                 videoIds = data.items.map(item => item.contentDetails.videoId);
-                console.log("成功獲取影片:", videoIds);
+                console.log("成功拿到影片清單:", videoIds);
             } else {
-                throw new Error("清單無內容");
+                throw new Error("清單內容為空");
             }
         } catch (error) {
-            console.error("API 錯誤，使用備援影片:", error);
+            console.error("API 失敗，使用備援影片:", error);
+            // 備援：如果 API 壞了，至少顯示這 3 部
             videoIds = ['pyyxgrIuRz4', 'Bms0_5C_yYI', '8z6_C6o_0kI']; 
         } finally {
             initPlayer();
         }
     }
 
-    // --- 3. 初始化控制 ---
+    // --- 3. 初始化播放器與圓點 ---
     function initPlayer() {
         const player = document.getElementById('yt-player');
         const dotsContainer = document.getElementById('video-dots');
@@ -300,8 +302,8 @@
         if (!player || videoIds.length === 0) return;
         
         const vid = videoIds[currentVideoIndex];
+        // 加上 playlist 參數確保循環，origin 確保權限
         const origin = window.location.origin;
-        // 核心：playlist 參數必須存在才能 loop
         player.src = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&playlist=${vid}&loop=1&rel=0&enablejsapi=1&origin=${origin}`;
         
         updateDots();
@@ -309,27 +311,23 @@
 
     function createDots() {
         const dotsContainer = document.getElementById('video-dots');
-        dotsContainer.innerHTML = ''; 
+        dotsContainer.innerHTML = ''; // 清空
         
-        // 只針對前 DISPLAY_COUNT (3) 個影片建立點點
-        for (let i = 0; i < DISPLAY_COUNT; i++) {
-            if (!videoIds[i]) break;
+        videoIds.forEach((_, index) => {
             const dot = document.createElement('button');
-            // 基礎樣式：灰色圓點
-            dot.className = "w-2 h-2 rounded-full bg-gray-300 transition-all duration-500";
-            
-            if (i === currentVideoIndex) {
-                dot.classList.add('bg-primary', 'w-4'); // 選中時變長且變綠
-                dot.classList.remove('bg-gray-300');
+            // 預設樣式 (圓點)
+            dot.className = "w-2 h-2 rounded-full bg-gray-300 transition-all duration-300";
+            if (index === currentVideoIndex) {
+                dot.classList.add('bg-primary', 'w-4'); // 選中時變長且變色 (配合你的 Tailwind)
             }
             
             dot.onclick = () => {
-                currentVideoIndex = i;
+                currentVideoIndex = index;
                 updateVideo();
                 resetRotation();
             };
             dotsContainer.appendChild(dot);
-        }
+        });
     }
 
     function updateDots() {
@@ -348,14 +346,15 @@
         });
     }
 
-    // --- 4. 自動與手動切換 ---
+    // --- 4. 自動輪播與箭頭 ---
     function startAutoRotation() {
         clearInterval(autoPlayInterval);
         autoPlayInterval = setInterval(() => {
-            // 只在 0, 1, 2 之間循環
-            currentVideoIndex = (currentVideoIndex + 1) % DISPLAY_COUNT;
-            updateVideo();
-        }, 5000);
+            if (videoIds.length > 0) {
+                currentVideoIndex = (currentVideoIndex + 1) % videoIds.length;
+                updateVideo();
+            }
+        }, 5000); // 每 5 秒換下一部
     }
 
     function resetRotation() {
@@ -363,11 +362,13 @@
     }
 
     window.changeVideo = function(dir) {
-        currentVideoIndex = (currentVideoIndex + dir + DISPLAY_COUNT) % DISPLAY_COUNT;
+        if (videoIds.length === 0) return;
+        currentVideoIndex = (currentVideoIndex + dir + videoIds.length) % videoIds.length;
         updateVideo();
         resetRotation();
     };
 
+    // 啟動
     document.addEventListener('DOMContentLoaded', fetchLatestVideos);
 </script>
     </section>
