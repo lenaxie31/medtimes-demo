@@ -251,22 +251,20 @@
 </div>
 <div id="video-dots"></div>
 <script>
-    // --- 1. 設定區域 ---
-    // 確保這裡的 Key 是最新且「無限制」的
-    const API_KEY = 'AIzaSyAYIX74UJQDr-HNOXYy8zvU4sSyCLioXBQ'.trim(); 
-    const CHANNEL_ID = 'UC68sD-Y8XvG8y_Wk5K9S9vA'; 
-    const MAX_RESULTS = 5; 
+    // 1. 設定區 (確保名稱不重複)
+    const YT_API_KEY = 'AIzaSyAYIX74UJQDr-HNOXYy8zvU4sSyCLioXBQ'.trim(); 
+    const YT_CHANNEL_ID = 'UC68sD-Y8XvG8y_Wk5K9S9vA'; 
+    const YT_MAX_RESULTS = 5; 
 
-    // 全域變數
+    // 這裡用 let，且全網頁只能有這一個 videoIds
     let videoIds = []; 
     let currentVideoIndex = 0;
     let autoPlayInterval;
 
-    // --- 2. 核心：抓取影片 ---
+    // 2. 抓取函數
     async function fetchLatestVideos() {
-        console.log("開始抓取任務...");
-        // 使用 Search 接口並強制過濾可嵌入影片
-        const url = `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=snippet,id&order=date&maxResults=${MAX_RESULTS}&type=video&videoEmbeddable=true`;
+        console.log("正在執行 API 抓取...");
+        const url = `https://www.googleapis.com/youtube/v3/search?key=${YT_API_KEY}&channelId=${YT_CHANNEL_ID}&part=snippet,id&order=date&maxResults=${YT_MAX_RESULTS}&type=video&videoEmbeddable=true`;
 
         try {
             const response = await fetch(url);
@@ -274,56 +272,42 @@
             
             if (data.items && data.items.length > 0) {
                 videoIds = data.items.map(item => item.id.videoId);
-                console.log("API 抓取成功:", videoIds);
+                console.log("抓取成功，清單為:", videoIds);
             } else {
-                throw new Error("API 回傳資料空空的");
+                throw new Error("API 沒回傳影片");
             }
         } catch (error) {
-            console.error("API 失敗，啟動備援機制:", error);
-            // 備援：如果 API 壞了，至少顯示這幾支（包含你之前那支）
+            console.error("API 失敗，啟動備援:", error);
             videoIds = ['pyyxgrIuRz4', 'Bms0_5C_yYI', '8z6_C6o_0kI']; 
         } finally {
-            // 無論成功還是失敗，都「必須」執行初始化，圓點才會出來
-            initPlayer();
+            initPlayer(); // 無論如何都要畫出圓點
         }
     }
 
-    // --- 3. 播放器初始化 ---
+    // 3. 初始化
     function initPlayer() {
         const player = document.getElementById('yt-player');
         const dotsContainer = document.getElementById('video-dots');
-
-        if (!player || !dotsContainer) {
-            console.error("錯誤：找不到 yt-player 或 video-dots 容器！");
-            return;
-        }
+        if (!player || !dotsContainer) return;
 
         updateVideo();
         createDots();
         startAutoRotation();
     }
 
-    // --- 4. 更新影片內容 ---
     function updateVideo() {
         const player = document.getElementById('yt-player');
         if (!player || videoIds.length === 0) return;
-        
         const vid = videoIds[currentVideoIndex];
-        // 這是最穩定的 Embed 語法
-        player.src = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&playlist=${vid}&loop=1&rel=0&playsinline=1`;
-        
+        player.src = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&playlist=${vid}&loop=1&rel=0`;
         updateDots();
     }
 
-    // --- 5. 圓點控制 ---
     function createDots() {
         const dotsContainer = document.getElementById('video-dots');
-        if (!dotsContainer) return;
-        
-        dotsContainer.innerHTML = ''; // 清空
+        dotsContainer.innerHTML = '';
         videoIds.forEach((_, index) => {
             const dot = document.createElement('button');
-            // 這裡直接套用你原本 CSS 裡的 active 邏輯
             dot.className = index === currentVideoIndex ? 'active' : '';
             dot.onclick = () => {
                 currentVideoIndex = index;
@@ -336,21 +320,17 @@
 
     function updateDots() {
         const dotsContainer = document.getElementById('video-dots');
-        if (!dotsContainer) return;
         const dots = dotsContainer.querySelectorAll('button');
         dots.forEach((dot, index) => {
             dot.className = index === currentVideoIndex ? 'active' : '';
         });
     }
 
-    // --- 6. 自動輪播與箭頭 ---
     function startAutoRotation() {
         clearInterval(autoPlayInterval);
         autoPlayInterval = setInterval(() => {
-            if (videoIds.length > 0) {
-                currentVideoIndex = (currentVideoIndex + 1) % videoIds.length;
-                updateVideo();
-            }
+            currentVideoIndex = (currentVideoIndex + 1) % videoIds.length;
+            updateVideo();
         }, 5000);
     }
 
@@ -358,6 +338,7 @@
         startAutoRotation();
     }
 
+    // 箭頭控制
     window.changeVideo = function(dir) {
         if (videoIds.length === 0) return;
         currentVideoIndex = (currentVideoIndex + dir + videoIds.length) % videoIds.length;
@@ -365,7 +346,6 @@
         resetRotation();
     };
 
-    // 啟動！
     document.addEventListener('DOMContentLoaded', fetchLatestVideos);
 </script>
     </section>
