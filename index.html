@@ -251,48 +251,49 @@
 </div>
 <div id="video-dots"></div>
 <script>
-    // 1. 【核心定義區】這幾行必須在最上面
+    // --- 1. 設定區域 ---
     const YT_API_KEY = 'AIzaSyAYIX74UJQDr-HNOXYy8zvU4sSyCLioXBQ'.trim(); 
-    const YT_CHANNEL_ID = 'UC68sD-Y8XvG8y_Wk5K9S9vA'; 
+    // 這是你提供的播放清單 ID
+    const PLAYLIST_ID = 'PL4HYmHsHQr0ftgVf-CPgARpKN3GNKHCbu'; 
     const YT_MAX_RESULTS = 5; 
 
-    // 【關鍵變數】這行一定要存在，且不能重複！
+    // 全域變數定義
     let videoIds = []; 
     let currentVideoIndex = 0;
     let autoPlayInterval;
 
-    // 2. 【API 抓取函式】
+    // --- 2. 抓取播放清單影片 ---
     async function fetchLatestVideos() {
-        console.log("正在執行 API 抓取任務...");
-        // 加上 videoEmbeddable=true 確保抓到的影片是可以播放的
-        const url = `https://www.googleapis.com/youtube/v3/search?key=${YT_API_KEY}&channelId=${YT_CHANNEL_ID}&part=snippet,id&order=date&maxResults=${YT_MAX_RESULTS}&type=video&videoEmbeddable=true`;
+        console.log("正在從播放清單抓取影片...");
+        // 改用 playlistItems 接口，這最穩定
+        const url = `https://www.googleapis.com/youtube/v3/playlistItems?key=${YT_API_KEY}&playlistId=${PLAYLIST_ID}&part=snippet,contentDetails&maxResults=${YT_MAX_RESULTS}`;
 
         try {
             const response = await fetch(url);
             const data = await response.json();
             
             if (data.items && data.items.length > 0) {
-                videoIds = data.items.map(item => item.id.videoId);
-                console.log("成功拿到影片 ID:", videoIds);
+                // 從 contentDetails 提取影片 ID
+                videoIds = data.items.map(item => item.contentDetails.videoId);
+                console.log("播放清單抓取成功:", videoIds);
             } else {
-                throw new Error("API 資料為空");
+                throw new Error("播放清單是空的或 ID 錯誤");
             }
         } catch (error) {
-            console.error("API 失敗，使用備援影片:", error);
-            // 如果 API 沒反應，至少顯示這幾支
+            console.error("抓取失敗，啟動備援:", error);
             videoIds = ['pyyxgrIuRz4', 'Bms0_5C_yYI', '8z6_C6o_0kI']; 
         } finally {
-            initPlayer(); // 無論如何都要畫出圓點
+            initPlayer(); // 確保圓點一定會長出來
         }
     }
 
-    // 3. 【播放器初始化】
+    // --- 3. 初始化播放器 ---
     function initPlayer() {
         const player = document.getElementById('yt-player');
         const dotsContainer = document.getElementById('video-dots');
         
         if (!player || !dotsContainer) {
-            console.error("找不到播放器 ID (yt-player) 或圓點容器 ID (video-dots)！");
+            console.error("找不到 HTML 容器！");
             return;
         }
 
@@ -304,15 +305,18 @@
     function updateVideo() {
         const player = document.getElementById('yt-player');
         if (!player || videoIds.length === 0) return;
+        
         const vid = videoIds[currentVideoIndex];
-        // 加上 playlist 參數確保可以循環播放
-        player.src = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&playlist=${vid}&loop=1&rel=0`;
+        // 加上 playlist 參數確保循環播放，origin 確保權限
+        const origin = window.location.origin;
+        player.src = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&playlist=${vid}&loop=1&rel=0&enablejsapi=1&origin=${origin}`;
+        
         updateDots();
     }
 
     function createDots() {
         const dotsContainer = document.getElementById('video-dots');
-        dotsContainer.innerHTML = ''; // 清空舊的
+        dotsContainer.innerHTML = ''; 
         videoIds.forEach((_, index) => {
             const dot = document.createElement('button');
             dot.className = index === currentVideoIndex ? 'active' : '';
@@ -327,6 +331,7 @@
 
     function updateDots() {
         const dotsContainer = document.getElementById('video-dots');
+        if (!dotsContainer) return;
         const dots = dotsContainer.querySelectorAll('button');
         dots.forEach((dot, index) => {
             dot.className = index === currentVideoIndex ? 'active' : '';
@@ -347,7 +352,7 @@
         startAutoRotation();
     }
 
-    // 4. 【全域函式】給 HTML 箭頭按鈕點擊用的
+    // 全域箭頭函式
     window.changeVideo = function(dir) {
         if (videoIds.length === 0) return;
         currentVideoIndex = (currentVideoIndex + dir + videoIds.length) % videoIds.length;
@@ -355,7 +360,6 @@
         resetRotation();
     };
 
-    // 5. 【啟動程序】當網頁準備好就開始
     document.addEventListener('DOMContentLoaded', fetchLatestVideos);
 </script>
     </section>
