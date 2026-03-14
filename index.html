@@ -251,100 +251,17 @@
 </div>
 <div id="video-dots"></div>
 <script>
-    // 1. 設定區 (確保名稱不重複)
+    // --- 1. 設定區 ---
     const YT_API_KEY = 'AIzaSyAYIX74UJQDr-HNOXYy8zvU4sSyCLioXBQ'.trim(); 
     const YT_CHANNEL_ID = 'UC68sD-Y8XvG8y_Wk5K9S9vA'; 
     const YT_MAX_RESULTS = 5; 
 
-    // 這裡用 let，且全網頁只能有這一個 videoIds
+    // --- 關鍵點：全網頁「只能有這一個」 videoIds 定義 ---
     let videoIds = []; 
     let currentVideoIndex = 0;
     let autoPlayInterval;
 
-    // 2. 抓取函數
-    async function fetchLatestVideos() {
-        console.log("正在執行 API 抓取...");
-        const url = `https://www.googleapis.com/youtube/v3/search?key=${YT_API_KEY}&channelId=${YT_CHANNEL_ID}&part=snippet,id&order=date&maxResults=${YT_MAX_RESULTS}&type=video&videoEmbeddable=true`;
-
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            if (data.items && data.items.length > 0) {
-                videoIds = data.items.map(item => item.id.videoId);
-                console.log("抓取成功，清單為:", videoIds);
-            } else {
-                throw new Error("API 沒回傳影片");
-            }
-
-        } finally {
-            initPlayer(); // 無論如何都要畫出圓點
-        }
-    }
-
-    // 3. 初始化
-    function initPlayer() {
-        const player = document.getElementById('yt-player');
-        const dotsContainer = document.getElementById('video-dots');
-        if (!player || !dotsContainer) return;
-
-        updateVideo();
-        createDots();
-        startAutoRotation();
-    }
-
-    function updateVideo() {
-        const player = document.getElementById('yt-player');
-        if (!player || videoIds.length === 0) return;
-        const vid = videoIds[currentVideoIndex];
-        player.src = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&playlist=${vid}&loop=1&rel=0`;
-        updateDots();
-    }
-
-    function createDots() {
-        const dotsContainer = document.getElementById('video-dots');
-        dotsContainer.innerHTML = '';
-        videoIds.forEach((_, index) => {
-            const dot = document.createElement('button');
-            dot.className = index === currentVideoIndex ? 'active' : '';
-            dot.onclick = () => {
-                currentVideoIndex = index;
-                updateVideo();
-                resetRotation();
-            };
-            dotsContainer.appendChild(dot);
-        });
-    }
-
-    function updateDots() {
-        const dotsContainer = document.getElementById('video-dots');
-        const dots = dotsContainer.querySelectorAll('button');
-        dots.forEach((dot, index) => {
-            dot.className = index === currentVideoIndex ? 'active' : '';
-        });
-    }
-
-    function startAutoRotation() {
-        clearInterval(autoPlayInterval);
-        autoPlayInterval = setInterval(() => {
-            currentVideoIndex = (currentVideoIndex + 1) % videoIds.length;
-            updateVideo();
-        }, 5000);
-    }
-
-    function resetRotation() {
-        startAutoRotation();
-    }
-
-    // 箭頭控制
-    window.changeVideo = function(dir) {
-        if (videoIds.length === 0) return;
-        currentVideoIndex = (currentVideoIndex + dir + videoIds.length) % videoIds.length;
-        updateVideo();
-        resetRotation();
-    };
-
-    document.addEventListener('DOMContentLoaded', fetchLatestVideos);
+    // ... 後續的 fetchLatestVideos 等函式內容 ...
 </script>
     </section>
 
