@@ -279,30 +279,31 @@
 
     // --- 3. API 抓取邏輯 ---
     async function fetchLatestVideos() {
-        console.log("正在執行 API 抓取...");
-        const url = `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=snippet,id&order=date&maxResults=${MAX_RESULTS}&type=video`;
+    // 頻道 ID 是 UC... 開頭，而上傳清單 ID 會是 UU... 開頭 (只需把 C 換成 U)
+    const UPLOADS_PLAYLIST_ID = CHANNEL_ID.replace(/^UC/, 'UU'); 
+    
+    // 改用 playlistItems 接口，這才是真正的「最新上傳」
+    const url = `https://www.googleapis.com/youtube/v3/playlistItems?key=${API_KEY}&playlistId=${UPLOADS_PLAYLIST_ID}&part=snippet,contentDetails&maxResults=${MAX_RESULTS}&_t=${Date.now()}`;
 
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            if (data.error) {
-                console.error("API 報錯:", data.error.message);
-                // 只有在完全失敗時才放這支當備份，否則不准出現
-                videoIds = ['pyyxgrIuRz4']; 
-            } else if (data.items && data.items.length > 0) {
-                // 成功抓取：將抓到的 ID 存入 videoIds
-                videoIds = data.items.map(item => item.id.videoId);
-                console.log("成功更新影片清單:", videoIds);
-            }
-            
-            initPlayer();
-        } catch (error) {
-            console.error("抓取異常:", error);
-            videoIds = ['pyyxgrIuRz4'];
-            initPlayer();
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.error) {
+            console.error("API 錯誤:", data.error.message);
+            videoIds = ['pyyxgrIuRz4']; // 備援
+        } else if (data.items) {
+            // 從 contentDetails 拿到影片 ID
+            videoIds = data.items.map(item => item.contentDetails.videoId);
+            console.log("最新抓取的影片清單:", videoIds);
         }
+        initPlayer();
+    } catch (error) {
+        console.error("抓取失敗");
+        videoIds = ['pyyxgrIuRz4'];
+        initPlayer();
     }
+}
 
     // --- 4. 播放器控制 ---
     function initPlayer() {
