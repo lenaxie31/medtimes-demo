@@ -276,9 +276,7 @@
             } else {
                 throw new Error("API 沒回傳影片");
             }
-        } catch (error) {
-            console.error("API 失敗，啟動備援:", error);
-            videoIds = ['pyyxgrIuRz4', 'Bms0_5C_yYI', '8z6_C6o_0kI']; 
+
         } finally {
             initPlayer(); // 無論如何都要畫出圓點
         }
