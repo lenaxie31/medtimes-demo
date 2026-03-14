@@ -237,14 +237,10 @@
                         </iframe>
 
                        <div class="relative group">
-    <div class="video-wrapper"> <iframe id="yt-player" 
-                src="" 
-                title="YouTube video player" 
-                frameborder="0" 
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                allowfullscreen>
-        </iframe>
-    </div>
+   <div class="video-wrapper">
+    <iframe id="yt-player" src="" frameborder="0" allowfullscreen></iframe>
+</div>
+<div id="video-dots" class="flex justify-center gap-2 mt-6"></div>
     
     <button onclick="window.changeVideo(-1)" class="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all z-10">
         <i class="fa-solid fa-chevron-left"></i>
@@ -255,110 +251,101 @@
 </div>
 <div id="video-dots"></div>
 <script>
-    // --- 1. 設定區域 ---
-    // 確保這裡的 Key 是你最新產生的，且沒有空格
-    const API_KEY = 'AIzaSyAYIX74UJQDr-HNOXYy8zvU4sSyCLioXBQ'.trim(); 
-    const CHANNEL_ID = 'UC68sD-Y8XvG8y_Wk5K9S9vA'; 
-    const MAX_RESULTS = 5; 
+    const API_KEY = 'AIzaSyAYIX74UJQDr-HNOXYy8zvU4sSyCLioXBQ'.trim();
+    const CHANNEL_ID = 'UC68sD-Y8XvG8y_Wk5K9S9vA';
+    const MAX_RESULTS = 5;
 
-    // 初始設為空，迫使程式必須去抓最新的
-    let videoIds = []; 
+    let videoIds = [];
     let currentVideoIndex = 0;
     let autoPlayInterval;
 
-    const player = document.getElementById('yt-player');
-    const dotsContainer = document.getElementById('video-dots');
-
-    // --- 2. 切換邏輯 (掛載到 window 讓 HTML 箭頭可用) ---
-    window.changeVideo = function(direction) {
-        if (videoIds.length === 0) return;
-        currentVideoIndex = (currentVideoIndex + direction + videoIds.length) % videoIds.length;
-        updateVideo();
-        resetAutoRotation();
-    };
-
-    // --- 3. API 抓取邏輯 ---
     async function fetchLatestVideos() {
-    // 1. 我們改回 search，但加上 videoEmbeddable 參數，確保抓到的影片「允許被嵌入」
-    const url = `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=snippet,id&order=date&maxResults=10&type=video&videoEmbeddable=true`;
+        // 使用更穩定的 search API，並過濾掉不可嵌入的影片
+        const url = `https://www.googleapis.com/youtube/v3/search?key=${API_KEY}&channelId=${CHANNEL_ID}&part=snippet,id&order=date&maxResults=${MAX_RESULTS}&type=video&videoEmbeddable=true`;
 
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
-        
-        if (data.error) {
-            console.error("API 錯誤:", data.error.message);
-            videoIds = ['pyyxgrIuRz4']; 
-        } else if (data.items && data.items.length > 0) {
-            // 2. 只有有效的影片 ID 才會被加入 (排除掉可能抓錯的頻道 ID)
-            videoIds = data.items
-                .filter(item => item.id && item.id.videoId)
-                .map(item => item.id.videoId)
-                .slice(0, 5); // 只取前 5 名
+        try {
+            console.log("嘗試抓取影片...");
+            const response = await fetch(url);
+            const data = await response.json();
             
-            console.log("最終可播放影片 ID:", videoIds);
+            if (data.items && data.items.length > 0) {
+                videoIds = data.items.map(item => item.id.videoId);
+                console.log("抓取成功:", videoIds);
+            } else {
+                throw new Error("沒有抓到影片資料");
+            }
+        } catch (error) {
+            console.error("API 出錯，啟用備援機制:", error);
+            videoIds = ['pyyxgrIuRz4']; // 如果 API 壞了，至少播這支
+        } finally {
+            // 無論成功失敗，都一定要初始化播放器
+            initPlayer();
         }
-        initPlayer();
-    } catch (error) {
-        console.error("抓取失敗");
-        videoIds = ['pyyxgrIuRz4'];
-        initPlayer();
     }
-}
 
-    // --- 4. 播放器控制 ---
     function initPlayer() {
+        const player = document.getElementById('yt-player');
+        const dotsContainer = document.getElementById('video-dots');
+
+        if (!player || !dotsContainer) {
+            console.error("找不到播放器或圓點容器！請檢查 HTML ID");
+            return;
+        }
+
         updateVideo();
         createDots();
         startAutoRotation();
     }
 
     function updateVideo() {
-        if (!player || videoIds.length === 0) return;
+        const player = document.getElementById('yt-player');
         const vid = videoIds[currentVideoIndex];
-        // 確保使用最新的影片 ID 更新 src
-        player.src = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&loop=1&playlist=${vid}&rel=0`;
+        player.src = `https://www.youtube.com/embed/${vid}?autoplay=1&mute=1&playlist=${vid}&loop=1&rel=0`;
         updateDots();
     }
 
     function createDots() {
-        if (!dotsContainer) return;
-        dotsContainer.innerHTML = '';
+        const dotsContainer = document.getElementById('video-dots');
+        dotsContainer.innerHTML = ''; // 清空舊的
         videoIds.forEach((_, index) => {
             const dot = document.createElement('button');
+            dot.className = index === currentVideoIndex ? 'active' : '';
             dot.onclick = () => {
                 currentVideoIndex = index;
                 updateVideo();
-                resetAutoRotation();
+                resetRotation();
             };
             dotsContainer.appendChild(dot);
         });
-        updateDots();
     }
 
     function updateDots() {
-        if (!dotsContainer) return;
+        const dotsContainer = document.getElementById('video-dots');
         const dots = dotsContainer.querySelectorAll('button');
         dots.forEach((dot, index) => {
-            dot.className = (index === currentVideoIndex) ? 'active' : '';
+            dot.className = index === currentVideoIndex ? 'active' : '';
         });
     }
 
     function startAutoRotation() {
-        if (autoPlayInterval) clearInterval(autoPlayInterval);
+        clearInterval(autoPlayInterval);
         autoPlayInterval = setInterval(() => {
-            if (videoIds.length > 0) {
-                currentVideoIndex = (currentVideoIndex + 1) % videoIds.length;
-                updateVideo();
-            }
+            currentVideoIndex = (currentVideoIndex + 1) % videoIds.length;
+            updateVideo();
         }, 5000);
     }
 
-    function resetAutoRotation() {
+    function resetRotation() {
         startAutoRotation();
     }
 
-    // 啟動
+    // 箭頭按鈕使用的全域函式
+    window.changeVideo = function(dir) {
+        currentVideoIndex = (currentVideoIndex + dir + videoIds.length) % videoIds.length;
+        updateVideo();
+        resetRotation();
+    };
+
     document.addEventListener('DOMContentLoaded', fetchLatestVideos);
 </script>
     </section>
