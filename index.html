@@ -186,7 +186,7 @@
                     <div class="relative w-[280px] md:w-[320px] aspect-[9/16] rounded-[2.5rem] shadow-2xl overflow-hidden border-[8px] border-white ring-1 ring-gray-200 transform hover:-translate-y-2 transition-transform duration-500">
 
                         <!-- YouTube iframe 輪播層 A -->
-                        <div id="yt-layer-a" class="absolute inset-0 transition-opacity duration-700 opacity-100 z-10">
+                        <div id="yt-layer-a" class="absolute inset-0 transition-opacity duration-[1200ms] opacity-100 z-10">
                             <iframe id="yt-player-a"
                                 class="w-full h-full"
                                 frameborder="0"
@@ -196,7 +196,7 @@
                         </div>
 
                         <!-- YouTube iframe 輪播層 B（轉場用）-->
-                        <div id="yt-layer-b" class="absolute inset-0 transition-opacity duration-700 opacity-0 z-10">
+                        <div id="yt-layer-b" class="absolute inset-0 transition-opacity duration-[1200ms] opacity-0 z-10">
                             <iframe id="yt-player-b"
                                 class="w-full h-full"
                                 frameborder="0"
@@ -680,8 +680,8 @@
     <script src="https://www.youtube.com/iframe_api"></script>
     <script>
         const YT_PLAYLIST_ID = 'PL4HYmHsHQr0ftgVf-CPgARpKN3GNKHCbu';
-        const SLIDE_DURATION = 5500; // 5.5 秒
-        const FADE_DURATION  = 700;  // 與 CSS transition-duration 一致
+        const SLIDE_DURATION = 7500; // 7.5 秒
+        const FADE_DURATION  = 1200; // 與 CSS transition-duration 一致
 
         let ytVideoIds  = [];
         let ytCurrent   = 0;
@@ -752,7 +752,7 @@
             // 預載下一支到隱藏層
             inactiveIframe.src = buildSrc(nextId);
 
-            // 短暫等 iframe 開始載入再 fade
+            // 等 iframe 開始載入再 fade（時間拉長讓過渡更明顯）
             setTimeout(() => {
                 if (activeLayer === 'a') {
                     layerA.style.opacity = '0';
@@ -764,7 +764,7 @@
                 activeLayer = inactive;
                 ytCurrent = nextIdx;
                 updateDot(ytCurrent);
-            }, 300);
+            }, 600);
         }
 
         // 5. 啟動定時輪播
